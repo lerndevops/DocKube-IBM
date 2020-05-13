@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: naresh-pvc
+  name: mypvc
 spec:
   storageClassName: standard
   volumeName: my-pv
