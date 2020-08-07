@@ -3,13 +3,13 @@ kind: Deployment
 metadata:
   name: kubeserve
 spec:
-  replicas: 8
+  replicas: 4
   minReadySeconds: 45 # wait for 45 sec before pod is ready going to next
   strategy:
     type: RollingUpdate
     rollingUpdate:
       maxUnavailable: 1  # take down 1 pod at a time
-      maxSurge: 2        # max number of pods to run for the deployment
+      maxSurge: 1        # max number of pods to run for the deployment
   selector:
     matchLabels:
       app: kubeserve
