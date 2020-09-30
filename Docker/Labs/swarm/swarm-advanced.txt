@@ -9,6 +9,8 @@ You can add pieces of metadata to your swarm nodes using node labels. You can th
      view node labels with: docker node inspect --pretty NODE
 
 Node Constraints:
+
+ Deployment to Only Nodes:   docker service create --name ravi --constraint node.Role==worker -p 1234:80 nginx
   --constraint: 
      To run a service's tasks only on nodes with a specific label value, 
           docker service create --constraint node.labels.LABEL==VALUE IMAGE
