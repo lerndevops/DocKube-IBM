@@ -1,3 +1,10 @@
+###Install OLM:
+============
+curl -sL https://github.com/operator-framework/operator-lifecycle-manager/releases/download/v0.17.0/install.sh | bash -s v0.17.0
+
+###Isntall Splunk Operator:
+============================
+
 kubectl create -f https://operatorhub.io/install/splunk.yaml
 kubectl get ns
   kubectl get pods my-splunk
