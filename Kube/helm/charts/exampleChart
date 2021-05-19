@@ -1,0 +1,175 @@
+Convert the Service Manifest into a Service Template in a New Helm Chart
+On the first console, create a blob directory called blog:
+
+mkdir blog
+Access the directory:
+
+cd blog
+Run the touch and mkdir commands to create the minimum necessary scaffolding for the new chart. This includes the Chart.yaml and values.yaml files as well as the templates directory:
+
+touch Chart.yaml
+touch values.yaml
+mkdir templates
+View the chart details:
+
+ls -l
+Create the Chart.yaml file:
+
+vim Chart.yaml
+Add the apiVersion, name, and version to the file (this is the minimum data required for Chart.yaml):
+
+apiVersion: v1
+name: blog
+version: 0.1.0
+Save and exit the file.
+
+Create the values.yaml file:
+
+vim values.yaml
+On the second console, view the home directory, which contains a kubernetes directory:
+
+ls
+Run the cd and ls commands to open and view the kubernetes directory. The directory contains an application.yaml file and a service.yaml file:
+
+$ cd kubernetes/
+ls
+View service.yaml:
+
+vim service.yaml
+On the first console, use the data from service.yaml to add data to values.yaml. Update nodePort to 30080:
+
+service:
+ name: blog
+ type: NodePort
+ port: 80
+ targetPort: 2368
+ nodePort: 30080
+On the first console, save values.yaml.
+
+On the second console, exit out of service.yaml.
+
+On the second console, run the cd command to open the blog folder and run the vim command to view the values.yaml file:
+
+cd ../blog
+vim ./values.yaml
+On the first console, open the templates directory:
+
+cd templates/
+Copy the service.yaml file into the blog folder's templates directory:
+
+cp ~/kubernetes/service.yaml ./
+Run the ls and vim commands to view service.yaml.
+
+ls service.yaml
+vim service.yaml
+Use the values.yaml data on the second console to make service.yaml a template on the first console. To do this, update the service.yaml file values as follows:
+
+apiVersion: v1
+kind: Service
+metadata:
+    name: {{ .Values.service.name }}
+spec:
+    type: {{ .Values.service.type }}
+    selector:
+        app: {{ .Values.service.name }}
+    ports:
+    -   protocol: TCP
+        port: {{ .Values.service.port }}
+        targetPort: {{ .Values.service.targetPort }}
+        nodePort: {{ .Values.service.nodePort }}
+On the first console, save the template to return to the templates directory.
+
+On the second console, exit out of values.yaml to return to the blog folder.
+
+On the first console, run the cd and helm show values commands to view the blog details. At this point, we have a full Helm chart:
+
+cd ~/
+helm show values blog
+Verify the manifest's syntax is correct:
+
+helm install demo blog --dry-run
+On the second console, run the cd and cat commands so you can compare the two service.yaml files.
+
+cd ../
+cat ./kubernetes/service.yaml
+Confirm the service.yaml data matches on the first and second consoles, with the exception of the nodePort value.
+
+After reviewing the service.yaml data, clear both consoles.
+
+clear
+Convert the Manifest for the Application into a Deployment Template in a New Helm Chart
+On the second console, view the application.yaml file:
+
+vim ./kubernetes/application.yaml
+On the first console, view the blog folder's values.yaml file:
+
+vim ./blog/values.yaml
+Below the existing file data, create a new blog section by inserting the following values. You can copy these values from the second console:
+
+blog:
+  name: blog
+  replicas: 1
+  image: ghost:2.6-alpine
+  imagePullPolicy: Always
+  containerPort: 2368
+On the second console, exit out of the chart.
+
+On the first console, save the values file.
+
+On the second console, view the blog folder's values.yaml file:
+
+vim ./blog/values.yaml
+On the first console, copy the kubernetes folder's application.yaml file into the blog folder's templates directory:
+
+cp ./kubernetes/application.yaml ./blog/templates/
+View the application.yaml file in the blog folder's templates directory:
+
+vim ./blog/templates/application.yaml
+Make application.yaml a template by updating the file values as follows:
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.blog.name }}
+  labels:
+    app: {{ .Values.blog.name}}
+spec:
+  replicas: {{ .Values.blog.replicas }}
+  selector:
+    matchLabels:
+      app: {{ .Values.blog.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.blog.name }}
+    spec:
+      containers:
+      - name: {{ .Values.blog.name }}
+        image: {{ .Values.blog.image }}
+        imagePullPolicy: {{ .Values.blog.imagePullPolicy }}
+        ports:
+        - containerPort: {{ .Values.blog.containerPort }}
+After updating the file values, save the template and clear the console:
+
+clear
+On the second console, exit out of the values.yaml file.
+
+Ensure the Manifests Render Correctly and Deploy the Application as a NodePort Application
+On the first console, run the helm show values command to view the blog folder's details:
+
+helm show values blog
+Run the helm install command with the --dry-run directive. The manifest should display with the service set to run as a NodePort on port 30080 (in the lab video, this step produced an error message because there was a typo in the application.yaml file):
+
+helm install demo blog --dry-run
+Install and deploy Helm:
+
+helm install demo blog
+View the pod details (note that the pod's status is ContainerCreating):
+
+kubectl get po
+While the container is being created, view the service details (note that the blog service is running on the correct NodePort of 30080):
+
+kubectl get svc
+Verify the pod's status is now Running:
+
+kubectl get po
