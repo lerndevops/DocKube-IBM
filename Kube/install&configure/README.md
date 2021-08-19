@@ -1,4 +1,4 @@
-## Install Kubernetes on Ubuntu 18.04 LTS 
+
 
 
 ## Install Kubernetes on Ubuntu 18.04 LTS 
