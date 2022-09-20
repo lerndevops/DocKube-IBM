@@ -1,126 +1,61 @@
 
+## Step 1. Install Docker and Kube (RUN on Both Masster & Nodes)
+
+### Install Docker: 
+-------------------
+
+./installDocker.sh
+
+### Install DockerCRI connector
+------------------------------
+
+./installCRIDockerd.sh
+
+#### Now update cridockerd service and restart as below
+
+vi /etc/systemd/system/cri-docker.service
+
+--network-plugin=cni  --cni-bin-dir=/opt/cni/bin --cni-conf-dir=/etc/cni/net.d
+
+![image](https://user-images.githubusercontent.com/36464863/189142998-bb999780-be58-458c-bba6-bf6a789affbd.png)
 
 
-# Install Kubernetes Using Script
+######(refs: https://github.com/Mirantis/cri-dockerd/blob/master/README.md)
 
-### `Step1: On Master Node Only`
-```
-## Install Docker,kubeadm,kubelet,kubectl
+systemctl daemon-reload
 
-sudo wget https://raw.githubusercontent.com/lerndevops/labs/master/scripts/installK8S-v1-23.sh -P /tmp
-sudo chmod 755 /tmp/installK8S-v1-23.sh
-sudo bash /tmp/installK8S-v1-23.sh
+service cri-docker restart
 
-## Initialize kubernetes Master Node
- 
-   sudo kubeadm init --ignore-preflight-errors=all
+service docker restart
 
-   sudo mkdir -p $HOME/.kube
-   sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
-   sudo chown $(id -u):$(id -g) $HOME/.kube/config
 
-   ## install networking driver -- Weave/flannel/canal/calico etc... 
 
-   ## below installs weave networking driver 
-    
-   sudo kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d '\n')" 
 
-   # Validate:  kubectl get nodes
-```
-### `Step2: On All Worker Nodes`
-```
-## Install Docker,kubeadm,kubelet
 
-sudo wget https://raw.githubusercontent.com/lerndevops/labs/master/scripts/installK8S-v1-23.sh -P /tmp
-sudo chmod 755 /tmp/installK8S-v1-23.sh
-sudo bash /tmp/installK8S-v1-23.sh
+### Install Kubernetes
+----------------------
 
-## Run Below on Master Node to get join token 
+./installK8S.sh
+
+
+## Step 2. Initialize Master  (Run only on Master)
+
+sudo kubeadm init --cri-socket unix:///var/run/cri-dockerd.sock
+
+
+    sudo mkdir -p $HOME/.kube
+    sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+    sudo chown $(id -u):$(id -g) $HOME/.kube/config
+
+
+sudo kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d '\n')" 
+
+
+## Step3. Add the Nodes to Master
 
 kubeadm token create --print-join-command 
 
     copy the kubeadm join token from master & run it on all nodes
 
     Ex: kubeadm join 10.128.15.231:6443 --token mks3y2.v03tyyru0gy12mbt \
-           --discovery-token-ca-cert-hash sha256:3de23d42c7002be0893339fbe558ee75e14399e11f22e3f0b34351077b7c4b56
-```
-
-# Manual Installation Steps
-### `Step1:  On Master Node Only`
-```
-    ### INSTALL DOCKER 
-    
-    sudo apt-get update
-    sudo apt-get install -y apt-transport-https ca-certificates curl software-properties-common
-
-    sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-    sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
-    sudo apt-get update ; clear
-    sudo apt-get install -y docker-ce
-    
-    sudo wget https://raw.githubusercontent.com/lerndevops/labs/master/kube/install/daemon.json -P /etc/docker
-    sudo service docker restart
-    sudo service docker status
-   
-    ### INSTALL KUBEADM,KUBELET,KUBECTL
-    
-    sudo echo "deb http://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list
-    sudo curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
-    sudo apt-get update ; clear
-    sudo apt-get install -y kubelet=1.23.6-00 kubeadm=1.23.6-00 kubectl=1.23.6-00
-
-    ### Initialize Master Node 
-    
-    sudo kubeadm init --ignore-preflight-errors=all
-	
-    sudo mkdir -p $HOME/.kube
-    sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
-    sudo chown $(id -u):$(id -g) $HOME/.kube/config
-
-    ## install networking driver -- Weave/flannel/canal/calico etc... 
-
-    ## below installs weave networking driver 
-    
-    sudo kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d '\n')" 
-	
-    # Validate: kubectl get nodes
-```
-### Step2: `On All Worker Nodes:`
-```
-    ### INSTALL DOCKER 
-    
-    sudo apt-get update
-    sudo apt-get install -y apt-transport-https ca-certificates curl software-properties-common
-
-    sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-    sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
-    sudo apt-get update ; clear
-    sudo apt-get install -y docker-ce
-    
-    sudo wget https://raw.githubusercontent.com/lerndevops/labs/master/kube/install/daemon.json -P /etc/docker
-    sudo service docker restart
-    sudo service docker status
-   
-    ### INSTALL KUBEADM,KUBELET,KUBECTL
-    
-    sudo echo "deb http://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list
-    sudo curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
-    sudo apt-get update ; clear
-    sudo apt-get install -y kubelet=1.23.6-00 kubeadm=1.23.6-00 kubectl=1.23.6-00
-
-    ## RUN Below on Master Node to get join token 
-    
-    kubeadm token create --print-join-command
-       
-    copy the kubeadm join token from master & run it on all nodes
-          
-    Ex: kubeadm join 10.128.15.231:6443 --token mks3y2.v03tyyru0gy12mbt \
-           --discovery-token-ca-cert-hash sha256:3de23d42c7002be0893339fbe558ee75e14399e11f22e3f0b34351077b7c4b56
-
-
-
-
-## how to find kubeadm join token later
-```
-kubeadm token create --print-join-command --ttl=0
-```
+           --discovery-token-ca-cert-hash sha256:3de23d42c7002be0893339fbe558ee75e14399e11f22e3f0b34351077b7c4b56 --cri-socket unix:///var/run/cri-dockerd.sock
