@@ -4,7 +4,7 @@ metadata:
   name: mypvc
 spec:
   storageClassName: standard
-  volumeName: my-pv
+#  volumeName: my-pv
   accessModes:
     - ReadWriteOnce
   resources:
